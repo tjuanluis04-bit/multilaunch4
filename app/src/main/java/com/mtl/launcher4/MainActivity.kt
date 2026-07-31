@@ -68,7 +68,11 @@ class MainActivity : AppCompatActivity() {
         }
 
         findViewById<Button>(R.id.launchButton).setOnClickListener {
-            onLaunchClicked()
+            if (ensureShizukuReady()) launchAllApps()
+        }
+
+        findViewById<Button>(R.id.diagButton).setOnClickListener {
+            if (ensureShizukuReady()) runDiagnostic()
         }
 
         Shizuku.addRequestPermissionResultListener(permissionListener)
@@ -120,21 +124,57 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun onLaunchClicked() {
+    /**
+     * Comprueba que Shizuku esté corriendo, con permiso concedido y con el
+     * servicio ya conectado. Si falta algo, lo soluciona (pide permiso,
+     * conecta el servicio) y devuelve false para que quien llama reintente
+     * en el siguiente click.
+     */
+    private fun ensureShizukuReady(): Boolean {
         if (!Shizuku.pingBinder()) {
             log("Shizuku no está corriendo. Ábrelo primero e inicia el servicio (por ADB/wireless debugging).")
-            return
+            return false
         }
         if (Shizuku.checkSelfPermission() != PackageManager.PERMISSION_GRANTED) {
             Shizuku.requestPermission(PERMISSION_REQUEST_CODE)
-            return
+            return false
         }
         if (userService == null) {
             bindService()
-            log("Conectando con el servicio... pulsa 'Lanzar las 4 apps' de nuevo en un segundo.")
+            log("Conectando con el servicio... pulsa el botón de nuevo en un segundo.")
+            return false
+        }
+        return true
+    }
+
+    private fun runDiagnostic() {
+        val app = Prefs.load(this, 0)
+        if (app == null) {
+            log("Elige primero una app en el espacio 'Arriba-izquierda' para diagnosticar con ella.")
             return
         }
-        launchAllApps()
+        val service = userService ?: return
+        val component = "${app.packageName}/${app.activityName}"
+
+        log("--- DIAGNÓSTICO con ${app.label} ---")
+        thread {
+            try {
+                val startOut = service.exec("am start -n $component --windowingMode 5")
+                runOnUiThread { log("[start] -> $startOut") }
+
+                Thread.sleep(1000)
+
+                val dumpCmd = "dumpsys activity activities | grep -n -i -A 3 -B 3 '${app.packageName}'"
+                val dumpOut = service.exec(dumpCmd)
+                runOnUiThread {
+                    log("--- Salida de dumpsys (busca dónde aparece el ID de tarea) ---")
+                    log(dumpOut.ifBlank { "(vacío: no encontró el paquete en el dump; puede que la app no haya arrancado)" })
+                    log("--- FIN DIAGNÓSTICO ---")
+                }
+            } catch (e: Exception) {
+                runOnUiThread { log("Error en diagnóstico: ${e.message}") }
+            }
+        }
     }
 
     private fun launchAllApps() {

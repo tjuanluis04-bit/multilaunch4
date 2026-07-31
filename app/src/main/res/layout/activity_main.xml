@@ -53,19 +53,34 @@
         android:id="@+id/launchButton"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
         android:text="Lanzar las 4 apps"
         android:backgroundTint="#2E7D32"
         android:textColor="#FFFFFF" />
 
-    <TextView
-        android:id="@+id/logText"
+    <Button
+        android:id="@+id/diagButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:text="Diagnóstico (ver formato de tarea)"
+        android:backgroundTint="#455A64"
+        android:textColor="#FFFFFF" />
+
+    <ScrollView
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_weight="1"
-        android:layout_marginTop="16dp"
-        android:scrollbars="vertical"
-        android:textSize="11sp"
-        android:fontFamily="monospace"
-        android:text="" />
+        android:layout_marginTop="16dp">
+
+        <TextView
+            android:id="@+id/logText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textIsSelectable="true"
+            android:textSize="11sp"
+            android:fontFamily="monospace"
+            android:text="" />
+
+    </ScrollView>
 
 </LinearLayout>
