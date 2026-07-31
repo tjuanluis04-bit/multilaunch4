@@ -239,8 +239,15 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { log("[${app.label}] -> $out") }
                 }
 
+                // Nuestra propia app sigue en primer plano y en pantalla
+                // completa, tapando las 4 ventanas freeform que acabamos de
+                // colocar. Vamos al escritorio (Home) para apartarnos y que
+                // queden visibles, ya que las ventanas freeform flotan sobre
+                // el launcher, no debajo de él.
+                service.exec("input keyevent 3")
+
                 runOnUiThread {
-                    log("Listo. Si alguna ventana no quedó en su sitio, arrástrala/redimensiónala a mano (depende del fabricante y versión de Android).")
+                    log("Listo. Te llevé al escritorio para que veas las 4 ventanas. Si alguna no quedó en su sitio, arrástrala/redimensiónala a mano.")
                 }
             } catch (e: Exception) {
                 runOnUiThread { log("Error: ${e.message}") }
