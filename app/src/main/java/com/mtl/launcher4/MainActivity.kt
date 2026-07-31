@@ -239,15 +239,14 @@ class MainActivity : AppCompatActivity() {
                     runOnUiThread { log("[${app.label}] -> $out") }
                 }
 
-                // Nuestra propia app sigue en primer plano y en pantalla
-                // completa, tapando las 4 ventanas freeform que acabamos de
-                // colocar. Vamos al escritorio (Home) para apartarnos y que
-                // queden visibles, ya que las ventanas freeform flotan sobre
-                // el launcher, no debajo de él.
-                service.exec("input keyevent 3")
-
                 runOnUiThread {
-                    log("Listo. Te llevé al escritorio para que veas las 4 ventanas. Si alguna no quedó en su sitio, arrástrala/redimensiónala a mano.")
+                    log("Listo. Minimizando esta app para dejar ver las 4 ventanas...")
+                    // Importante: NO usamos el botón Home, porque el propio
+                    // launcher del teléfono también es una app a pantalla
+                    // completa y taparía igual a las 4 ventanas freeform.
+                    // moveTaskToBack solo aparta a MultiLaunch4 sin traer
+                    // ningún otro tapón fullscreen por delante.
+                    moveTaskToBack(true)
                 }
             } catch (e: Exception) {
                 runOnUiThread { log("Error: ${e.message}") }
