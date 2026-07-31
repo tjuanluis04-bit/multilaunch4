@@ -173,11 +173,17 @@ class MainActivity : AppCompatActivity() {
                     sleep 1
                     tid=${'$'}(dumpsys activity activities | grep 'Task{' | grep '${app.packageName}' | tail -1 | sed -E 's/.*#([0-9]+).*/\1/')
                     echo "TID_ENCONTRADO=[${'$'}tid]"
-                    echo "--- intentando am task resize ---"
-                    am task resize ${'$'}tid $left $top $right $bottom
-                    echo "--- (si no aparece nada arriba, el comando no imprimió error ni éxito) ---"
-                    echo "--- estado de la tarea después del resize ---"
-                    dumpsys activity activities | grep -A 4 "#${'$'}tid "
+
+                    echo "=== INTENTO 1: 4 argumentos sueltos ==="
+                    am task resize ${'$'}tid $left $top $right $bottom 2>&1
+                    echo "EXIT_INTENTO_1=${'$'}?"
+
+                    echo "=== INTENTO 2: un argumento con comas ==="
+                    am task resize ${'$'}tid "$left,$top,$right,$bottom" 2>&1
+                    echo "EXIT_INTENTO_2=${'$'}?"
+
+                    echo "=== estado de la tarea después de ambos intentos ==="
+                    dumpsys activity activities | grep -A 2 "#${'$'}tid "
                 """.trimIndent()
 
                 val out = service.exec(script)
