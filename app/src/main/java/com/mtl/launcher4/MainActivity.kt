@@ -156,19 +156,33 @@ class MainActivity : AppCompatActivity() {
         val service = userService ?: return
         val component = "${app.packageName}/${app.activityName}"
 
-        log("--- DIAGNÓSTICO con ${app.label} ---")
+        val dm = resources.displayMetrics
+        val w = dm.widthPixels
+        val h = dm.heightPixels
+        // Cuadrante superior-izquierdo real, calculado con el tamaño de pantalla.
+        val left = 0
+        val top = 0
+        val right = w / 2
+        val bottom = h / 2
+
+        log("--- DIAGNÓSTICO con ${app.label} (pantalla ${w}x$h) ---")
         thread {
             try {
-                val startOut = service.exec("am start -n $component --windowingMode 5")
-                runOnUiThread { log("[start] -> $startOut") }
+                val script = """
+                    am start -n $component --windowingMode 5
+                    sleep 1
+                    tid=${'$'}(dumpsys activity activities | grep 'Task{' | grep '${app.packageName}' | tail -1 | sed -E 's/.*#([0-9]+).*/\1/')
+                    echo "TID_ENCONTRADO=[${'$'}tid]"
+                    echo "--- intentando am task resize ---"
+                    am task resize ${'$'}tid $left $top $right $bottom
+                    echo "--- (si no aparece nada arriba, el comando no imprimió error ni éxito) ---"
+                    echo "--- estado de la tarea después del resize ---"
+                    dumpsys activity activities | grep -A 4 "#${'$'}tid "
+                """.trimIndent()
 
-                Thread.sleep(1000)
-
-                val dumpCmd = "dumpsys activity activities | grep -n -i -A 3 -B 3 '${app.packageName}'"
-                val dumpOut = service.exec(dumpCmd)
+                val out = service.exec(script)
                 runOnUiThread {
-                    log("--- Salida de dumpsys (busca dónde aparece el ID de tarea) ---")
-                    log(dumpOut.ifBlank { "(vacío: no encontró el paquete en el dump; puede que la app no haya arrancado)" })
+                    log(out.ifBlank { "(sin salida)" })
                     log("--- FIN DIAGNÓSTICO ---")
                 }
             } catch (e: Exception) {
