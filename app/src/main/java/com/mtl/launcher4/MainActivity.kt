@@ -258,7 +258,7 @@ class MainActivity : AppCompatActivity() {
     private fun buildScript(pkg: String, act: String, b: IntArray): String {
         val component = "$pkg/$act"
         return "am start -n $component --windowingMode 5\n" +
-            "sleep 0.7\n" +
+            "sleep 1\n" +
             "tid=\$(dumpsys activity activities | grep 'Task{' | grep '$pkg' | tail -1 | sed -E 's/.*#([0-9]+).*/\\1/')\n" +
             "if [ -n \"\$tid\" ]; then am task resize \$tid ${b[0]} ${b[1]} ${b[2]} ${b[3]}; fi"
     }
