@@ -159,13 +159,16 @@ class MainActivity : AppCompatActivity() {
         val dm = resources.displayMetrics
         val w = dm.widthPixels
         val h = dm.heightPixels
-        // Cuadrante superior-izquierdo real, calculado con el tamaño de pantalla.
-        val left = 0
-        val top = 0
-        val right = w / 2
-        val bottom = h / 2
+        // Objetivo: esquina inferior-derecha, deliberadamente distinta de
+        // donde el sistema coloca la ventana freeform por defecto (que
+        // suele ser arriba-izquierda), para saber con certeza si el resize
+        // tiene efecto real o no.
+        val left = w / 2
+        val top = h / 2
+        val right = w
+        val bottom = h
 
-        log("--- DIAGNÓSTICO con ${app.label} (pantalla ${w}x$h) ---")
+        log("--- DIAGNÓSTICO con ${app.label} (pantalla ${w}x$h), moviendo a abajo-derecha ($left,$top,$right,$bottom) ---")
         thread {
             try {
                 val script = """
@@ -174,16 +177,16 @@ class MainActivity : AppCompatActivity() {
                     tid=${'$'}(dumpsys activity activities | grep 'Task{' | grep '${app.packageName}' | tail -1 | sed -E 's/.*#([0-9]+).*/\1/')
                     echo "TID_ENCONTRADO=[${'$'}tid]"
 
-                    echo "=== INTENTO 1: 4 argumentos sueltos ==="
+                    echo "=== bounds ANTES del resize ==="
+                    dumpsys activity activities | grep -A 1 "#${'$'}tid "
+
+                    echo "=== ejecutando am task resize ==="
                     am task resize ${'$'}tid $left $top $right $bottom 2>&1
-                    echo "EXIT_INTENTO_1=${'$'}?"
+                    echo "EXIT_RESIZE=${'$'}?"
+                    sleep 0.5
 
-                    echo "=== INTENTO 2: un argumento con comas ==="
-                    am task resize ${'$'}tid "$left,$top,$right,$bottom" 2>&1
-                    echo "EXIT_INTENTO_2=${'$'}?"
-
-                    echo "=== estado de la tarea después de ambos intentos ==="
-                    dumpsys activity activities | grep -A 2 "#${'$'}tid "
+                    echo "=== bounds DESPUÉS del resize ==="
+                    dumpsys activity activities | grep -A 1 "#${'$'}tid "
                 """.trimIndent()
 
                 val out = service.exec(script)
